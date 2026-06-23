@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { getInvitationBySlug } from "../../services/mockApi";
+import { getInvitationBySlug } from "../../services/invitationService";
 import { RsvpForm } from "../rsvp/RsvpForm";
 
 export function InvitationPage() {

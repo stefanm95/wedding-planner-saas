@@ -2,16 +2,36 @@ export type EventType = "wedding" | "baptism" | "birthday" | "anniversary" | "co
 export type PackageType = "essential" | "premium" | "premiumPlus" | "custom";
 export type EventStatus = "draft" | "published" | "archived";
 export type Attendance = "yes" | "no";
+export type WorkspaceRole = "workspaceOwner" | "workspaceEditor" | "workspaceViewer";
+export type PlatformRole = "platformAdmin";
 
-export type User = {
+export type AuthUser = {
   id: string;
   email: string;
   displayName: string;
   createdAt: string;
 };
 
+export type User = AuthUser;
+
+export type Workspace = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+};
+
+export type WorkspaceMember = {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceRole;
+  createdAt: string;
+};
+
 export type Event = {
   id: string;
+  workspaceId: string;
   ownerId: string;
   eventType: EventType;
   packageType: PackageType;
@@ -98,6 +118,21 @@ export type PackagePlan = {
   description: string;
   features: string[];
   highlighted?: boolean;
+};
+
+export type PublicInvitation = {
+  event: Event;
+  details: EventDetails;
+  template: Template | null;
+};
+
+export type AdminSummary = {
+  users: number;
+  workspaces: number;
+  events: number;
+  templates: number;
+  openSupportTickets: number;
+  auditLogEntries: number;
 };
 
 export type CreateEventInput = {

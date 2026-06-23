@@ -1,15 +1,65 @@
-import type { Event, EventDetails, RSVP, User } from "../types/domain";
+import type { AuthUser, Event, EventDetails, RSVP, Workspace, WorkspaceMember } from "../types/domain";
 
-export const mockUser: User = {
+export const mockUser: AuthUser = {
   id: "user_001",
   email: "owner@example.com",
   displayName: "Maya Hart",
   createdAt: "2026-01-04T10:00:00.000Z",
 };
 
+export const mockUsers: AuthUser[] = [
+  mockUser,
+  {
+    id: "user_002",
+    email: "editor@example.com",
+    displayName: "Elliot Page",
+    createdAt: "2026-01-12T10:00:00.000Z",
+  },
+  {
+    id: "user_003",
+    email: "viewer@example.com",
+    displayName: "Sofia Lane",
+    createdAt: "2026-01-16T10:00:00.000Z",
+  },
+];
+
+export const mockWorkspace: Workspace = {
+  id: "workspace_001",
+  name: "Maya Events Studio",
+  slug: "maya-events-studio",
+  createdAt: "2026-01-04T10:00:00.000Z",
+};
+
+export const mockWorkspaces: Workspace[] = [mockWorkspace];
+
+export const mockWorkspaceMembers: WorkspaceMember[] = [
+  {
+    id: "member_001",
+    workspaceId: "workspace_001",
+    userId: "user_001",
+    role: "workspaceOwner",
+    createdAt: "2026-01-04T10:00:00.000Z",
+  },
+  {
+    id: "member_002",
+    workspaceId: "workspace_001",
+    userId: "user_002",
+    role: "workspaceEditor",
+    createdAt: "2026-01-12T10:00:00.000Z",
+  },
+  {
+    id: "member_003",
+    workspaceId: "workspace_001",
+    userId: "user_003",
+    role: "workspaceViewer",
+    createdAt: "2026-01-16T10:00:00.000Z",
+  },
+];
+
 export const mockEvents: Event[] = [
   {
     id: "event_001",
+    workspaceId: "workspace_001",
     ownerId: "user_001",
     eventType: "wedding",
     packageType: "premium",

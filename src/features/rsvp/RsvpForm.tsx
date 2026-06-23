@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { submitRsvp } from "../../services/mockApi";
+import { submitRsvp } from "../../services/rsvpService";
 import type { RSVPInput } from "../../types/domain";
 
 const rsvpSchema = z.object({

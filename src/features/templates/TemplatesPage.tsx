@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { eventTypeOptions } from "../../data/catalog";
-import { getTemplates } from "../../services/mockApi";
+import { getTemplates } from "../../services/templateService";
 
 export function TemplatesPage() {
   const { eventType } = useParams();
@@ -18,7 +18,7 @@ export function TemplatesPage() {
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-ink sm:text-5xl">Start with a beautiful page.</h1>
           <p className="mt-5 text-lg leading-8 text-stone-600">Browse active mock templates by event type. Selection is connected to the creation wizard.</p>
         </div>
-        <Link to="/app/events/new" className="btn-primary">Create from template</Link>
+        <Link to="/create" className="btn-primary">Start invitation</Link>
       </div>
       <div className="mt-8 flex gap-2 overflow-x-auto pb-2">
         <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${!eventType ? "bg-ink text-white" : "bg-white text-stone-600"}`} to="/templates">
@@ -42,7 +42,7 @@ export function TemplatesPage() {
             <div className="p-5">
               <h2 className="text-xl font-bold text-ink">{template.name}</h2>
               <p className="mt-2 text-sm text-stone-600">{template.styleTags.join(" / ")}</p>
-              <Link to="/app/events/new" className="btn-secondary mt-5 w-full">Use this template</Link>
+              <Link to="/create" className="btn-secondary mt-5 w-full">Use this template</Link>
             </div>
           </article>
         ))}

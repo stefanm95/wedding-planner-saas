@@ -2,10 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { eventTypeOptions, packagePlans } from "../../data/catalog";
-import { createEvent, getTemplates } from "../../services/mockApi";
+import { useAuthStore } from "../auth/authStore";
+import { createEvent } from "../../services/eventService";
+import { getTemplates } from "../../services/templateService";
 import type { EventType, PackageType } from "../../types/domain";
 
 const eventFormSchema = z.object({
@@ -36,15 +38,26 @@ const defaultValues: EventFormValues = {
   locationAddress: "The Glasshouse Garden, Bucharest",
 };
 
-const steps = ["Event type", "Package", "Template", "Details", "Review"];
+const steps = ["Event type", "Package", "Template", "Details", "Save"];
 
-export function EventWizard() {
+type EventWizardProps = {
+  entry?: "public" | "app";
+};
+
+export function EventWizard({ entry = "app" }: EventWizardProps) {
   const [step, setStep] = useState(0);
   const [eventType, setEventType] = useState<EventType>("wedding");
   const [packageType, setPackageType] = useState<PackageType>("premium");
   const [templateId, setTemplateId] = useState("rose-vow");
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const [createdEventId, setCreatedEventId] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
+  const [email, setEmail] = useState("owner@example.com");
+  const [password, setPassword] = useState("password");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
+  const isPublicEntry = entry === "public";
 
   const { data: templates = [] } = useQuery({
     queryKey: ["templates", eventType],
@@ -72,8 +85,9 @@ export function EventWizard() {
       }),
     onSuccess: async ({ event }) => {
       setCreatedSlug(event.slug);
+      setCreatedEventId(event.id);
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      setStep(4);
+      navigate(`/app/events/${event.id}`);
     },
   });
 
@@ -89,11 +103,20 @@ export function EventWizard() {
     void form.handleSubmit((values) => createMutation.mutate(values))();
   }
 
+  function authenticateAndSave(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    login();
+    createInvitation();
+  }
+
   return (
     <div className="grid gap-6">
       <section className="rounded-[2rem] bg-white p-6 shadow-soft">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cocoa">Creation wizard</p>
-        <h2 className="mt-2 text-3xl font-bold text-ink">Build a public invitation</h2>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cocoa">{isPublicEntry ? "Start invitation" : "Creation wizard"}</p>
+        <h2 className="mt-2 text-3xl font-bold text-ink">Build your event invitation</h2>
+        <p className="mt-2 text-stone-600">
+          {isPublicEntry ? "Create the invitation first. You will create an account only when it is time to save the draft." : "Create a new draft inside your event workspace."}
+        </p>
         <div className="mt-6 grid gap-2 sm:grid-cols-5">
           {steps.map((item, index) => (
             <div key={item} className={`rounded-full px-4 py-2 text-center text-sm font-semibold ${index === step ? "bg-ink text-white" : "bg-blush text-stone-600"}`}>
@@ -176,17 +199,51 @@ export function EventWizard() {
 
         {step === 4 ? (
           <div className="grid gap-5">
-            <h3 className="text-2xl font-bold text-ink">Your invitation is ready.</h3>
-            <p className="text-stone-600">Use the generated public link below. The QR code box is a placeholder for a later dependency.</p>
-            <div className="rounded-3xl bg-blush p-5">
-              <p className="text-sm font-semibold text-cocoa">Public URL</p>
-              <Link className="mt-2 block break-all text-xl font-bold text-ink" to={`/invite/${createdSlug ?? "maya-and-alex"}`}>
-                /invite/{createdSlug ?? "maya-and-alex"}
-              </Link>
-            </div>
-            <div className="flex h-40 w-40 items-center justify-center rounded-3xl border border-dashed border-stone-300 bg-white text-center text-sm font-semibold text-stone-500">
-              QR placeholder
-            </div>
+            {createdEventId ? (
+              <>
+                <h3 className="text-2xl font-bold text-ink">Your invitation draft is saved.</h3>
+                <p className="text-stone-600">You will be redirected to your workspace. Publish it there when everything is ready.</p>
+                <Link className="font-semibold text-ink" to={`/app/events/${createdEventId}`}>Manage draft</Link>
+              </>
+            ) : isPublicEntry ? (
+              <form className="grid gap-4" onSubmit={authenticateAndSave}>
+                <div>
+                  <h3 className="text-2xl font-bold text-ink">Create your account to save your invitation.</h3>
+                  <p className="mt-2 text-stone-600">Your details are ready. Sign up or log in now, and we will save the invitation as a draft in your workspace.</p>
+                </div>
+                <div className="flex rounded-full bg-blush p-1">
+                  <button type="button" className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold ${authMode === "signup" ? "bg-white text-ink shadow-sm" : "text-stone-600"}`} onClick={() => setAuthMode("signup")}>Create account</button>
+                  <button type="button" className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold ${authMode === "login" ? "bg-white text-ink shadow-sm" : "text-stone-600"}`} onClick={() => setAuthMode("login")}>Log in</button>
+                </div>
+                <label className="grid gap-2">
+                  <span className="label">Email</span>
+                  <input className="field" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+                </label>
+                <label className="grid gap-2">
+                  <span className="label">Password</span>
+                  <input className="field" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+                </label>
+                <button className="btn-primary" type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Saving draft..." : authMode === "signup" ? "Create account and save draft" : "Log in and save draft"}
+                </button>
+              </form>
+            ) : (
+              <div className="grid gap-5">
+                <h3 className="text-2xl font-bold text-ink">Save this invitation as a draft.</h3>
+                <p className="text-stone-600">The public link is reserved after saving, but guests can only open it once you publish.</p>
+                <button type="button" className="btn-primary w-fit" onClick={createInvitation} disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Saving..." : "Save draft"}
+                </button>
+              </div>
+            )}
+            {createdSlug ? (
+              <div className="rounded-3xl bg-blush p-5">
+                <p className="text-sm font-semibold text-cocoa">Reserved public URL</p>
+                <Link className="mt-2 block break-all text-xl font-bold text-ink" to={`/invite/${createdSlug}`}>
+                  /invite/{createdSlug}
+                </Link>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -194,13 +251,9 @@ export function EventWizard() {
           <button type="button" className="btn-secondary" onClick={() => setStep((current) => Math.max(current - 1, 0))} disabled={step === 0}>
             Back
           </button>
-          {step < 3 ? <button type="button" className="btn-primary" onClick={nextStep}>Continue</button> : null}
-          {step === 3 ? (
-            <button type="button" className="btn-primary" onClick={createInvitation} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create invitation"}
-            </button>
-          ) : null}
-          {step === 4 ? <Link className="btn-primary" to={`/invite/${createdSlug ?? "maya-and-alex"}`}>Open invitation</Link> : null}
+          {step < 4 ? <button type="button" className="btn-primary" onClick={nextStep}>Continue</button> : null}
+          {step === 4 && createdSlug ? <span className="btn-secondary opacity-60">Publish before sharing</span> : null}
+          {step === 4 && createdEventId ? <Link className="btn-secondary" to={`/app/events/${createdEventId}`}>Manage draft</Link> : null}
         </div>
       </section>
     </div>

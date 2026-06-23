@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { packagePlans } from "../../data/catalog";
+import { FinalCtaSection } from "../marketing/MarketingPages";
 
 export function PricingPage() {
   return (
@@ -25,12 +26,13 @@ export function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/app/events/new" className={plan.highlighted ? "btn-secondary mt-6 w-full" : "btn-primary mt-6 w-full"}>
-              Choose {plan.name}
+            <Link to="/create" className={plan.highlighted ? "btn-secondary mt-6 w-full" : "btn-primary mt-6 w-full"}>
+              Start with {plan.name}
             </Link>
           </article>
         ))}
       </div>
+      <FinalCtaSection />
     </section>
   );
 }
